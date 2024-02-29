@@ -54,7 +54,7 @@ def load_list(id)
   list = @storage.find_list(id)
   return list if list
 
-  @storage.add_error_message('The specified list was not found.')
+  add_error_message('The specified list was not found.')
   redirect '/lists'
 end
 
@@ -70,6 +70,14 @@ end
 # Return an error message if the name is invalid. Return nil if name is valid.
 def error_for_todo(name)
   'Todo must be between 1 and 100 characters.' if !(1..100).cover? name.size
+end
+
+def add_success_message(msg)
+  session[:success] = msg
+end
+
+def add_error_message(error)
+  session[:error] = error
 end
 
 before { @storage = DatabasePersistence.new(logger) }
@@ -95,11 +103,11 @@ post '/lists' do
 
   error = error_for_list_name(list_name)
   if error
-    @storage.add_error_message(error)
+    add_error_message(error)
     erb :new_list, layout: :layout
   else
     @storage.create_new_list(list_name)
-    @storage.add_success_message('The list has been created.')
+    add_success_message('The list has been created.')
     redirect '/lists'
   end
 end
@@ -126,11 +134,11 @@ post '/lists/:id' do
 
   error = error_for_list_name(list_name)
   if error
-    @storage.add_error_message(error)
+    add_error_message(error)
     erb :edit_list, layout: :layout
   else
     @storage.update_list_name(id, list_name)
-    @storage.add_success_message('The list has been updated.')
+    add_success_message('The list has been updated.')
     redirect "/lists/#{id}"
   end
 end
@@ -139,7 +147,7 @@ end
 post '/lists/:id/destroy' do
   id = params[:id].to_i
   @storage.delete_list(id)
-  @storage.add_success_message('The list has been deleted.')
+  add_success_message('The list has been deleted.')
   if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
     '/lists'
   else
@@ -155,12 +163,12 @@ post '/lists/:list_id/todos' do
 
   error = error_for_todo(text)
   if error
-    @storage.add_error_message(error)
+    add_error_message(error)
     erb :list, layout: :layout
   else
     @storage.create_new_todo(@list_id, text)
 
-    @storage.add_success_message('The todo was added.')
+    add_success_message('The todo was added.')
     redirect "/lists/#{@list_id}"
   end
 end
@@ -175,7 +183,7 @@ post '/lists/:list_id/todos/:id/destroy' do
   if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
     status 204
   else
-    @storage.add_success_message('The todo has been deleted.')
+    add_success_message('The todo has been deleted.')
     redirect "/lists/#{@list_id}"
   end
 end
@@ -189,7 +197,7 @@ post '/lists/:list_id/todos/:id' do
   is_completed = params[:completed] == 'true'
   @storage.update_todo_status(@list_id, todo_id, is_completed)
 
-  @storage.add_success_message('The todo has been updated.')
+  add_success_message('The todo has been updated.')
   redirect "/lists/#{@list_id}"
 end
 
@@ -200,6 +208,6 @@ post '/lists/:id/complete_all' do
 
   @storage.mark_all_todos_completed(@list_id)
 
-  @storage.add_success_message('All todos have been completed.')
+  add_success_message('All todos have been completed.')
   redirect "/lists/#{@list_id}"
 end
