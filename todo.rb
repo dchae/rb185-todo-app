@@ -82,6 +82,8 @@ end
 
 before { @storage = DatabasePersistence.new(logger) }
 
+after { @storage.disconnect }
+
 get '/' do
   redirect '/lists'
 end
